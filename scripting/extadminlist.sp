@@ -3,7 +3,6 @@
 #include <ccc>
 #define REQUIRE_PLUGIN
 
-ConVar cEnabled;
 ConVar cMethod;
 ConVar cOffline;
 ConVar cOnline;
@@ -37,7 +36,6 @@ public Plugin myinfo = {
 
 public OnPluginStart() {
 	CreateConVar("sm_extadminlist_version", PLUGIN_VERSION, PLUGIN_NAME, FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	cEnabled = CreateConVar("sm_extadminlist_enabled", "1", "Set to 0 to disable the plugin");
 	cMethod =  CreateConVar("sm_extadminlist_method", "1", "0 - Disabled, 1 - Menu/Chat, 2 - Chat, 3 - Menu");
 	cOffline = CreateConVar("sm_extadminlist_offline", "1", "Display offline admins in the list");
 	cOnline =  CreateConVar("sm_extadminlist_onlinefirst", "1", "Display the online admins on the top of the list");
@@ -64,16 +62,32 @@ public Action Command_Admins(client, args) {
 }
 
 public void regenerateDisplay() {
+	//This function is used to generate the text and menu output for when a user wants to see the admin list.
 	if(stringBuilder == null) {
 		stringBuilder = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
 	} else {
 		stringBuilder.Clear();
 	}
-	
+}
+
+public bool shouldRegenerateList() {
+	int iMethod = cMethod.IntValue;
+	bool regnerate = false;
+	if(iMethod == 1 || iMethod == 2) {
+		//check chat display
+		regnerate = (stringBuilder == null || stringBuilder.Length < 1);
+	} 
+	if(iMethod == 1 || iMethod == 3) {
+		//check menu display
+		regnerate = (menuAdminList == null);
+	}
+	return regnerate;
 }
 
 public void displayAdminList(int client) {
-	
+	if(shouldRegenerateList()) {
+		regenerateDisplay();
+	}
 }
 
 public void clearPlayerVars(int client) {
